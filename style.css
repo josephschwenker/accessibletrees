@@ -1,0 +1,51 @@
+.window {
+    border: solid black 1px;
+    display: flex;
+    flex-direction: column;
+}
+
+#insertMenu {
+    display: flex;
+    flex-direction: column;
+}
+
+#treeContainer {
+    width: 500px;
+    height: 500px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: scroll;
+}
+
+#svg {
+    width: 100%;
+    height: 100%;
+}
+
+#panButton {
+    width: 20px;
+    height: 20px;
+    border: solid black 1px;;
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
+}
+
+.window li {
+    list-style: none;
+}
+
+dt {
+    font-weight: bold;
+    float: left;
+    clear: left;
+    width: 200px;
+    text-align: right;
+}
+
+dt::after {
+    content: ": ";
+    white-space: pre;
+}
