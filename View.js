@@ -4,8 +4,9 @@ class View {
         const b = document.body
         this.Edit.init(d)
         this.TreeView.init(d)
-        this.Summary.init(d)
         this.Move.init(d)
+        this.Break.init()
+        this.Summary.init(d)
         this.Status.init(d)
         this.File.init(d)
     }
@@ -44,6 +45,14 @@ class View {
         const escaped = serializer.serializeToString(svg)
         const prefix = "data:image/svg+xml;charset=utf-8,"
         return prefix + encodeURIComponent(escaped)
+    }
+
+    static Break = {
+        init() {
+            const div = document.createElement('div')
+            div.className = "break"
+            document.body.appendChild(div)
+        }
     }
 
     static ButtonItem(action) {
@@ -471,7 +480,7 @@ class View {
                 e.appendChild(exportPng)
 
                 let h2 = document.createElement("h2")
-                h2.textContent = "Exported image alt text"
+                h2.textContent = "Exported Image Alt Text"
                 e.appendChild(h2)
 
                 let alt = document.createElement("textarea")

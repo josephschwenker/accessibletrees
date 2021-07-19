@@ -105,6 +105,10 @@ h1, h2, h3, h4, h5, h6 {
     margin: 10px 20px;
 }
 
+.break {
+    flex-basis: 100%;
+}
+
 ol {
     padding: 0;
     text-align: center;
@@ -136,9 +140,14 @@ button:focus {
 
 textarea {
     border: solid darkgray 1px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.75) inset;
-    border-radius: 5px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5) inset;
     resize: none;
+    padding: 3px 10px;
+    font-family: inherit;
+}
+
+textarea:focus {
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5) inset, 0 0 5px 3px dodgerblue;
 }
 
 *:focus {
@@ -146,24 +155,17 @@ textarea {
     box-shadow: 0 0 5px 3px dodgerblue;
 }
 
-textarea:focus {
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.75) inset, 0 0 5px 3px dodgerblue;
-}
-
 #modeDisplayContainer {
     flex-basis: 100%;
-    order: 0;
 }
 
 #edit {
-    order: 1;
     width: 200px;
 }
 
 #treeContainer {
     height: 500px;
     flex-grow: 1;
-    order: 2;
     position: relative;
 }
 
@@ -185,22 +187,18 @@ textarea:focus {
 
 #move {
     width: 250px;
-    order: 3;
 }
 
 #statusContainer {
-    order: 5;
-    flex-basis: calc(33.33% - 1px);
+    flex-grow: 1;
 }
 
 #summaryContainer {
-    order: 4;
-    flex-basis: calc(33.33% - 1px);
+    width: 300px;
 }
 
 #file {
-    flex-basis: calc(33.33% - 1px);
-    order: 6;
+    width: 300px;
 }
 
 #insertMenu {
