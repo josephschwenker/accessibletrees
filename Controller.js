@@ -18,63 +18,61 @@ class Controller {
         document.getElementById("save").addEventListener('click', Controller.save)
         document.getElementById("loadDummy").addEventListener('click', Controller.load)
         document.getElementById("load").addEventListener('change', Controller.upload)
+        document.getElementById("exportSvg").addEventListener('click', Controller.exportSvg)
     }
 
     static moveLeft(e) {
         Model.move("left")
         View.render( Model.getData() )
         e.preventDefault()
-        console.log(Model.tree)
     }
 
     static moveRight(e) {
         Model.move("right")
         View.render( Model.getData() )
         e.preventDefault()
-        console.log(Model.tree)
     }
 
     static moveDown(e) {
         Model.move("down")
         View.render( Model.getData() )
         e.preventDefault()
-        console.log(Model.tree)
     }
 
     static moveUp(e) {
         Model.move("up")
         View.render( Model.getData() )
         e.preventDefault()
-        console.log(Model.tree)
     }
 
     static addNodeHead(e) {
         Model.addNodeHead()
         View.render( Model.getData() )
         e.preventDefault()
-        console.log(Model.tree)
     }
 
     static addNodeLeftChild(e) {
         Model.addNodeLeftChild()
         View.render( Model.getData() )
         e.preventDefault()
-        console.log(Model.tree)
     }
 
     static addNodeRightChild(e) {
         Model.addNodeRightChild()
         View.render( Model.getData() )
         e.preventDefault()
-        console.log(Model.tree)
+    }
+
+    static download(data, filename) {
+        const a = document.createElement("a")
+        a.setAttribute("href", data)
+        a.setAttribute("download", filename)
+        a.click()
     }
 
     static save(e) {
         let data = "data:text/json;charset=utf-8," + encodeURIComponent( Model.export() )
-        let a = document.createElement("a")
-        a.setAttribute("href", data)
-        a.setAttribute("download", `Tree (${new Date()}).json`)
-        a.click()
+        Controller.download(data, `Tree (${new Date()}).json`)
     }
 
     static load(e) {
@@ -90,6 +88,11 @@ class Controller {
     static readFile(e) {
         Model.import( JSON.parse(e.target.result) )
         View.render( Model.getData() )
+    }
+
+    static exportSvg(e) {
+        const data = View.exportSvg()
+        Controller.download(data, `Tree (${new Date()}).svg`)
     }
 
 }

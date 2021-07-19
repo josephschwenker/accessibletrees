@@ -27,6 +27,12 @@ class Tree {
         }
     }
 
+    getNodeByName(name) {
+        return this.getNodes(this.head).find(
+            node => node.name === name
+        )
+    }
+
     numberOfNodes() {
         return this.getNodes().length
     }
@@ -137,7 +143,7 @@ class Tree {
         }
     }
 
-    // get the horizontal position of this node
+    // get the horizontal position of this node, excluding any empty spaces
     getNodeIndex(n) {
         if ( n === this.head ) {
             // this is the head
@@ -145,6 +151,23 @@ class Tree {
         }
         else {
             let s = this.siblings(n)
+            if (s.length) {
+                return s.indexOf(n)
+            }
+            else {
+                throw new Error("Could not get node index")
+            }
+        }
+    }
+
+    // get the horizontal position of this node, including any blank spaces
+    getNodeIndexIncludeBlanks(n) {
+        if ( n === this.head ) {
+            // this is the head
+            return 0
+        }
+        else {
+            let s = this.getParent(n).children
             if (s.length) {
                 return s.indexOf(n)
             }
