@@ -88,7 +88,7 @@ class Model {
             edit: [
                 new Action("asHead", "Add Head of Tree", !!!this.tree.head),
                 new Action("asLeft", `Add Left Child of ${this.interface.current?.name}`, this.canAddLeftChild()),
-                new Action("asRight", `Add Right Child ${this.interface.current?.name}`, this.canAddRightChild()),
+                new Action("asRight", `Add Right Child of ${this.interface.current?.name}`, this.canAddRightChild()),
                 new Action("removeNode", `Remove ${this.interface.current?.name}`, !!this.interface.current),
                 new Action("renameNode", `Rename ${this.interface.current?.name}`, !!this.interface.current)
             ],

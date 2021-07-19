@@ -20,7 +20,7 @@ class View {
     }
 
     static getTitle(d) {
-        return `Computer science tree`
+        return `A circle-and-line diagram of a computer science tree data structure`
     }
 
     static getDesc(d) {
