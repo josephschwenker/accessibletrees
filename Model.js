@@ -20,13 +20,14 @@ class Model {
 
     static interface = {
         current: null,
-        nextNameIndex: 0,
     }
 
     static nodeNames = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")
     
     static getNextName() {
-        return this.nodeNames[this.interface.nextNameIndex++]
+        return this.nodeNames.find(
+            name => !this.tree.getNodeByName(name)
+        )
     }
 
     static canMoveLeft() {
@@ -68,12 +69,29 @@ class Model {
 
         return [
             new SummaryItem("numberOfNodes", "Number of Nodes", this.tree.numberOfNodes()),
-            new SummaryItem("arity", "Arity", this.tree.maximumChildren),
+            new SummaryItem("arity", "Arity", this.tree.arity),
             new SummaryItem("numberOfLeafNodes", "Number of Leaf Nodes", this.tree.numberOfLeafNodes() ),
             new SummaryItem("numberOfNonLeafNodes", "Number of Non-Leaf Nodes", this.tree.numberOfNonLeafNodes() ),
             new SummaryItem("treeDepth", "Tree Depth", this.tree.getTreeDepth() ),
         ]
     }
+
+    static numberSuffix(number) {
+        const suffixes = [
+            'th',
+            'st',
+            'nd',
+            'rd',
+            'th',
+            'th',
+            'th',
+            'th',
+            'th',
+            'th',
+        ]
+        return number + suffixes[ number % 10 ]
+    }
+
 
     static getActions() {
         class Action {
@@ -84,21 +102,51 @@ class Model {
             }
         }
 
+        let add = [
+            new Action("asHead", "Head to Tree", !!!this.tree.head),
+        ]
+
+        if (this.tree.arity===2) {
+            add = add.concat(
+                [
+                    new Action("asLeft", `Left Child`, this.canAddLeftChild()),
+                    new Action("asRight", `Right Child`, this.canAddRightChild()),
+                ]
+            )
+        }
+        else if (this.tree.arity === 1 || this.tree.arity > 2) {
+            for (let i=0; i<this.tree.arity; i++) {
+                add.push(
+                    new Action(
+                        `as${Model.numberSuffix(i)}`,
+                        `As ${Model.numberSuffix(i)} Child`,
+                        this.canAddChild(i),
+                    )
+                )
+            }
+        }
+        else {
+            throw new Error("Invalid arity")
+        }
+
         return {
+            add: add,
             edit: [
-                new Action("asHead", "Add Head of Tree", !!!this.tree.head),
-                new Action("asLeft", `Add Left Child of ${this.interface.current?.name}`, this.canAddLeftChild()),
-                new Action("asRight", `Add Right Child of ${this.interface.current?.name}`, this.canAddRightChild()),
-                new Action("removeNode", `Remove ${this.interface.current?.name}`, !!this.interface.current),
-                new Action("renameNode", `Rename ${this.interface.current?.name}`, !!this.interface.current)
+                new Action("removeNode", `Remove`, !!this.interface.current),
+                new Action("renameNode", `Rename`, !!this.interface.current),
             ],
             move: [
-                new Action("moveUp", `Move to Parent of ${this.interface.current?.name}`, this.canMoveUp() ),
-                new Action("moveDown", `Move to First Child of ${this.interface.current?.name}`, this.canMoveDown() ),
-                new Action("moveLeft", `Move Left of ${this.interface.current?.name}`, this.canMoveLeft() ),
-                new Action("moveRight", `Move Right of ${this.interface.current?.name}`, this.canMoveRight() ),
+                new Action("moveUp", `To Parent`, this.canMoveUp() ),
+                new Action("moveDown", `To First Child`, this.canMoveDown() ),
+                new Action("moveLeft", `Left`, this.canMoveLeft() ),
+                new Action("moveRight", `Right`, this.canMoveRight() ),
             ]
         }
+    }
+
+    static changeArity(arity) {
+        // before we start, cry
+        this.tree.arity = arity
     }
 
     static move(d) {
@@ -128,7 +176,9 @@ class Model {
     }
     
     static addNodeHead() {
-        this.interface.current = this.tree.addNode(null, this.getNextName(), 0) 
+        if ( !this.tree.head ) {
+            this.interface.current = this.tree.addNode(null, this.getNextName(), 0) 
+        }
     }
     
     static addNodeNthChild(n) {
@@ -136,11 +186,38 @@ class Model {
     }
     
     static addNodeLeftChild() {
-        this.addNodeNthChild(0)
+        if ( this.canAddLeftChild() ) {
+            this.addNodeNthChild(0)
+        }
     }
 
     static addNodeRightChild() {
-        this.addNodeNthChild(1)
+        if ( this.canAddRightChild() ) {
+            this.addNodeNthChild(1)
+        }
+    }
+
+    static renameNode(name) {
+        if (this.interface.current) {
+            return this.tree.renameNode(this.interface.current, name)
+        }
+    }
+
+    static removeNode() {
+        if (this.interface.current) {
+            const oldCurrent = this.interface.current
+            const parent = this.tree.getParent(oldCurrent)
+            if (parent) {
+                this.interface.current = parent
+            }
+            else if (!parent && this.tree.head === oldCurrent) {
+                this.interface.current = null
+            }
+            else {
+                throw new Error("Cannot remove node")
+            }
+            this.tree.removeNode(oldCurrent)
+        }
     }
 
     static export() {
@@ -157,7 +234,10 @@ class Model {
                 buildTree(jsonHead, jsonHead, Model.tree.head)
             }
             else {
-                for ( let jsonChild of jsonParent.children ) {
+                const children = jsonParent.children.filter(
+                    item => !!item
+                )
+                for ( let jsonChild of children ) {
                     const treeChild = Model.tree.addNode(
                         treeParent,
                         jsonChild.name,
@@ -171,7 +251,6 @@ class Model {
         // check if there is a tree in this file
         if ( json.tree.head ) {
             // load interface settings
-            this.interface.nextNameIndex = json.interface.nextNameIndex
     
             // delete the current tree
             delete this.tree
@@ -183,7 +262,7 @@ class Model {
             this.interface.current = this.tree.getNodeByName(json.interface.current.name)
         }
         else {
-            window.alert("This file cannot be loaded because its tree is missing a head.")
+            throw new Error("Invalid file")
         }
         
     }

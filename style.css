@@ -1,85 +1,39 @@
 * {
     box-sizing: border-box;
+    font-family: "Segoe UI", "Helvetica", sans-serif;
+    font-size: 14px;
+}
+
+html {
+    height: 100%;
 }
 
 body {
-    font-size: 12pt;
     display: flex;
-    flex-flow: row wrap;
-    font-family: "Segoe UI", "Helvetica", sans-serif;
+    flex-flow: wrap;
     background: white;
     margin: 0;
+    height: 100%;
 }
 
 h1, h2, h3, h4, h5, h6 {
     margin: 0;
-    font-size: inherit;
 }
-
-/* #menubar {
-    background: linear-gradient(rgba(255, 255, 255, 0.8), rgba(200, 200, 200, 0.8));
-    backdrop-filter: blur(25px);
-    padding: 2px 10px;
-    border-bottom: solid gray 1px;
-    height: 24px;
-    margin: 0;
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    position: relative;
-    z-index: 1;
-}
-
-#menubar * {
-    list-style: none;
-}
-
-#menubar > li {
-    margin-right: 20px;
-}
-
-#menubar h1 {
-    font-weight: normal;
-}
-
-#menubar h1:first-child {
-    font-weight: 700;
-}
-
-#menubar a {
-    text-decoration: none;
-    color: inherit;
-    cursor: normal;
-}
-
-#menubar a + ul {
-    display: none;
-    position: absolute;
-    top: 24px;
-    background: lightgray;
-    padding: 0;
-}
-
-#menubar li:active {
-    background: gray;
-}
-
-#menubar a + ul {
-    display: inline-block;
-} */
 
 .window {
     display: flex;
     flex-direction: column;
     background: lightgray;
-    margin: 5px;
+    margin-left: -1px;
+    margin-top: -1px;
     border: solid darkgray 1px;
-    border-radius: 5px;
     position: relative;
     box-shadow: 0 1px white inset;
+    overflow: hidden;
+    /* filter: drop-shadow( 0 1px 50px rgba(0, 0, 0, 0.3) ); */
 }
 
-.window::before {
+/* .window::before {
     position: absolute;
     content: "";
     box-shadow: 0 1px 50px rgba(0, 0, 0, 0.3);
@@ -88,22 +42,25 @@ h1, h2, h3, h4, h5, h6 {
     bottom: 0px;
     right: 0px;
     z-index: -1;
-}
+} */
 
-.window h1 {
+.window > h1 {
     background: linear-gradient(lightgray, darkgray);
     padding: 2px 10px;
     text-shadow: 0 1px rgba(255, 255, 255, 0.5);
     border-bottom: solid rgba(255, 255, 255, 0.5) 1px;
-    box-shadow: 0 -1px gray inset;
-    border-radius: 4px 4px 0 0;
+    box-shadow: 0 -1px gray inset, 0 1px rgba(255, 255, 255, 0.5) inset;
     font-weight: 500;
     text-align: center;
 }
 
-.window > * ~ * {
-    margin: 10px 20px;
-}
+/* .window > * ~ * {
+    margin: 5px 20px 0 20px;
+} */
+
+/* .window > *:last-child {
+    margin-bottom: 20px;
+} */
 
 .break {
     flex-basis: 100%;
@@ -111,65 +68,146 @@ h1, h2, h3, h4, h5, h6 {
 
 ol {
     padding: 0;
+    margin: 0;
     text-align: center;
 }
 
-ol button {
-    width: 100%;
+ol li:not(:last-child) {
+    margin-bottom: -1px;
 }
 
-button {
+.menubarLabel {
+    padding-left: 10px;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    text-shadow: 0 1px rgba(255, 255, 255, 0.5);
+}
+
+.menubarItem {
+    width: 100%;
+    text-align: left;
+    padding: 3px 20px 3px 30px;
+    border: solid transparent 1px;
+    background: transparent;
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+    font-weight: 500;
+    border: solid transparent 1px;
+    border-left: none;
+}
+
+    .menubarItem.disabled {
+        color: gray;
+    }
+
+    .menubarItem:not(.disabled):hover {
+        border: solid rgb(16, 80, 143) 1px;
+        border-left: none;
+        background: linear-gradient(dodgerblue, rgb(16, 80, 143));
+        color: white;
+    }
+
+ol li {
+    position: relative;
+}
+
+    ol li:last-child::after {
+        position: absolute;
+        content: "";
+        bottom: -4px;
+        left: 0;
+        right: 0;
+        width: 100%;
+        border-bottom: solid gray 1px;
+    }
+
+    ol:last-child li:last-child::after {
+        display: none;
+    }
+
+/* .button {
     border-radius: 999px;
     padding: 3px 20px;
     background: linear-gradient(white, lightgray, white);
-    border: solid gray 1px;
+    border: solid rgba(100,100,100) 1px;
     margin-bottom: 5px;
     min-width: 100px;
     white-space: nowrap;
     box-shadow: 0 1px darkgray, 0 1px lightgray inset;
+    position: relative;
+    overflow: hidden;
+    font-weight: 500;
 }
 
-button:active:focus {
+.button::before {
+    content: "";
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.5);
+    position: absolute;
+    left: 2px;
+    top: 0;
+    right: 2px;
+    bottom: 60%;
+}
+
+.button::after {
+    content: attr(data-content);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    color: black;
+}
+
+.button:active:focus {
     filter: brightness(70%);
-    box-shadow: none;
 }
 
-button:focus {
+.button:focus {
     box-shadow: 0 0 5px 3px dodgerblue, 0 1px darkgray, 0 1px lightgray inset;
-}
+} */
 
-textarea {
+textarea, input {
     border: solid darkgray 1px;
     box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5) inset;
     resize: none;
     padding: 3px 10px;
     font-family: inherit;
-}
-
-textarea:focus {
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5) inset, 0 0 5px 3px dodgerblue;
-}
-
-*:focus {
+    margin: 10px;
     outline: none;
-    box-shadow: 0 0 5px 3px dodgerblue;
 }
 
-#modeDisplayContainer {
-    flex-basis: 100%;
+textarea:focus, input:focus {
+    box-shadow:  0 0 5px 3px dodgerblue;
 }
 
 #edit {
-    width: 200px;
+    width: 300px;
+    flex-shrink: 0;
 }
+
+    #treePropertiesContainer {
+        padding-left: 30px;
+        font-weight: 500;
+    }
+
+    #treePropertiesContainer > input {
+        margin: 0 5px;
+        width: 50px;
+        text-align: center;
+        padding-right: 0;
+    }
 
 #treeContainer {
-    height: 500px;
     flex-grow: 1;
-    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
 }
 
-#treeContainer::after {
+/* #treeContainer::after {
     content: "✥";
     position: absolute;
     right: 10px;
@@ -183,22 +221,60 @@ textarea:focus {
     font-size: 20px;
     box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
     background: white;
-}
+} */
 
 #move {
     width: 250px;
+    flex-shrink: 0;
 }
 
 #statusContainer {
-    flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+    white-space: pre;
+    width: 100%;
+    justify-content: center;
+    background: lightgray;
+    order: 1;
+    padding: 3px 0;
+    border-top: solid darkgray 1px;
 }
 
-#summaryContainer {
-    width: 300px;
+    #statusLabel::after {
+        content: ": ";
+    }
+
+    #summary {
+        border-collapse: collapse;
+    }
+
+        #summary th {
+            padding: 2px 5px 2px 20px;
+        }
+
+        #summary td {
+            padding: 2px 20px 2px 5px;
+        }
+    
+        #summary > tr:nth-child(odd) {
+            background: rgb(210, 233, 255);
+        }
+
+        #summary > tr:nth-child(even) {
+            background: white;
+        }
+
+#rightPanel {
+    display: flex;
+    flex-direction: column;
 }
+
+    #rightPanel > .window:not(:last-child) {
+        margin-bottom: 20px;
+    }
 
 #file {
-    width: 300px;
+    flex-grow: 1;
 }
 
 #insertMenu {
@@ -212,19 +288,34 @@ textarea:focus {
     align-items: center;
     position: relative;
     /* overflow: scroll; */
+    color: black;
+}
+
+#svg {
     background-color: white;
     background-size: 20px 20px;
     background-image:
         linear-gradient(to right, rgba(0, 0, 0, 0.1) 1px, transparent 1px),
         linear-gradient(to bottom, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
-    color: black;
-}
-
-#svg {
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5) inset;
     width: 100%;
     height: 100%;
-    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5) inset;
+    margin-bottom: 0;
+    cursor: grab;
+    user-select: none;
 }
+
+    .node {
+        cursor: pointer;
+    }
+
+    #svg:active {
+        cursor: grabbing;
+    }
+
+    .currentNode {
+        filter: drop-shadow( 0 1px 2px black );
+    }
 
 .window li {
     list-style: none;

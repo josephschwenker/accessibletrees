@@ -1,7 +1,6 @@
 class Tree {
     constructor() {
-        this.maximumChildren = 2
-        this.mustHaveMaximumChildren = true
+        this.arity = 4
         this.head = null
         return this
     }
@@ -33,6 +32,37 @@ class Tree {
         )
     }
 
+    renameNode(node, newName) {
+        const nodeWithSameName = this.getNodeByName(newName)
+        if (nodeWithSameName === undefined && node) {
+            // this new name is unique
+            node.name = newName
+            return true
+        }
+        else if (nodeWithSameName === node) {
+            // we are renaming the node to its old name
+            return true
+        }
+        else if (nodeWithSameName !== node) {
+            // there is already another node other than this one with the new name
+            return false
+        }
+    }
+
+    removeNode(node) {
+        const parent = this.getParent(node)
+        if (parent) {
+            parent.children[ parent.children.indexOf(node) ] = undefined
+        }
+        else if ( node === this.head ) {
+            this.head = null
+        }
+        else {
+            throw new Error("Cannot delete node not in this tree")
+        }
+        
+    }
+
     numberOfNodes() {
         return this.getNodes().length
     }
@@ -62,6 +92,7 @@ class Tree {
                 return result[0]
             }
             else {
+                console.error(n)
                 throw new Error("Non-head node has no parent")
             }
         }

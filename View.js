@@ -1,23 +1,17 @@
 class View {
 
     static init(d) {
-        const b = document.body
         this.Edit.init(d)
         this.TreeView.init(d)
-        this.Move.init(d)
-        this.Break.init()
-        this.Summary.init(d)
         this.Status.init(d)
-        this.File.init(d)
+        this.RightPanel.init(d)
     }
 
     static render(d) {
-        View.TreeView.render(d)
-        View.Summary.render(d)
-        View.Status.render(d)
-        View.Edit.render(d)
-        View.Move.render(d)
-        View.File.render(d)
+        this.TreeView.render(d)
+        this.Status.render(d)
+        this.Edit.render(d)
+        this.RightPanel.render(d)
     }
 
     static getTitle(d) {
@@ -58,10 +52,10 @@ class View {
     static ButtonItem(action) {
         let li = document.createElement('li')
         let button = document.createElement('button')
-        li.id = action.id
         button.textContent = action.textContent
-        li.style.display = action.isEnabled ? "" : "none"
         button.href = "#"
+        button.className = "menubarItem"
+        button.id = action.id
         li.appendChild(button)
         return li
     }
@@ -80,97 +74,75 @@ class View {
 
     static Edit = {
         init(d) {
+
+            function populateMenu(menuId, actions, labeledBy) {
+                const menu = document.createElement('ol')
+                menu.setAttribute("aria-labelledby", labeledBy)
+                menu.id = menuId
+                actions.map(
+                    action => menu.appendChild( View.ButtonItem(action) )
+                )
+                return menu
+            }
+
+
             let e = document.createElement("div")
             e.classList.add("window")
             e.id = "edit"
 
-                let editContainerLabel = document.createElement("h1")
-                editContainerLabel.textContent = "Edit Nodes"
+                const editContainerLabel = document.createElement("h1")
+                editContainerLabel.textContent = "Edit and Move"
                 editContainerLabel.id = "editContainerLabel"
-            
-                let insertMenu = document.createElement("ol")
-                insertMenu.id = "insertMenu"
-                insertMenu.setAttribute("aria-labelledby", "editContainerLabel")
-
-
-                for (let a of d.view.actions.edit) {
-                    insertMenu.appendChild(
-                        View.ButtonItem(a)
-                    )
-                }
-
                 e.appendChild(editContainerLabel)
-                e.appendChild(insertMenu)
 
-            document.body.appendChild(e)
-        },
+                const addLabel = document.createElement("h2")
+                addLabel.id = "addLabel"
+                addLabel.textContent = "Add"
+                addLabel.className = "menubarLabel"
+                e.appendChild(addLabel)
+                e.appendChild( populateMenu("addMenu", d.view.actions.add, "addLabel") )
 
-        render(d) {
-            let e = document.getElementById("edit")
-            for (let a of d.view.actions.edit) {
-                let t = document.getElementById(a.id)
-                t.firstElementChild.textContent = a.textContent
-                t.style.display = a.isEnabled ? "" : "none"
-            }
-        }
-    }
+                const editLabel = document.createElement('h2')
+                editLabel.id = "editLabel"
+                editLabel.textContent = "Edit"
+                editLabel.className = "menubarLabel"
+                e.appendChild(editLabel)
+                e.appendChild( populateMenu("editMenu", d.view.actions.edit, "editLabel") )
 
-    static Move = {
-        init(d) {
-            let e = document.createElement("div")
-            e.id = "move"
-            e.classList.add("window")
+                const moveLabel = document.createElement('h2')
+                moveLabel.id = "moveLabel"
+                moveLabel.textContent = "Move"
+                moveLabel.className = "menubarLabel"
+                e.appendChild(moveLabel)
+                e.appendChild( populateMenu("moveMenu", d.view.actions.move, "moveLabel") )
 
-                let h1 = document.createElement("h1")
-                h1.textContent = "Move Cursor"
-                h1.id = "moveMenuLabel"
-                e.appendChild(h1)
+                const treePropertiesLabel = document.createElement('h2')
+                treePropertiesLabel.id = "treePropertiesLabel"
+                treePropertiesLabel.textContent = "Tree Properties"
+                treePropertiesLabel.className = "menubarLabel"
+                e.appendChild(treePropertiesLabel)
 
-                // let horizontalCategory = document.createElement('h2')
-                // horizontalCategory.textContent = "Horizontally"
-                // e.appendChild(horizontalCategory)
+                const treePropertiesContainer = document.createElement("div")
+                treePropertiesContainer.id = "treePropertiesContainer"
 
-                let moveMenu = document.createElement('ol')
-                moveMenu.setAttribute("aria-labelledby", "moveMenuLabel")
-                moveMenu.id = 'moveMenu'
+                    const span = document.createElement('span')
+                    span.textContent = "Nodes have at most"
+                    treePropertiesContainer.appendChild(span)
 
-                for (let a of d.view.actions.move) {
-                    moveMenu.appendChild(
-                        View.ButtonItem(a)
-                    )
-                }
+                    const spinner = document.createElement('input')
+                    spinner.id = "arity"
+                    spinner.type = "number"
+                    spinner.min = 1
+                    spinner.max = 16
+                    spinner.step = 1
+                    spinner.value = d.tree.arity
+                    treePropertiesContainer.appendChild(spinner)
 
-                e.appendChild(moveMenu)
+                    const span2 = document.createElement('span')
+                    span2.textContent = "children"
+                    treePropertiesContainer.appendChild(span2)
 
-                // let verticalCategory = document.createElement('h2')
-                // verticalCategory.textContent = "Vertically"
-                // e.appendChild(verticalCategory)
-
-            document.body.appendChild(e)
-
-        },
-
-        render(d) {
-            let insertMenu = document.getElementById("move")
-            for (let a of d.view.actions.move) {
-                let t = document.getElementById(a.id)
-                t.firstElementChild.textContent = a.textContent
-                t.style.display = a.isEnabled ? "" : "none"
-            }
-        }
-    }
-
-    static TreeView = {
-        init(d) {
-            let e = document.createElement("div")
-            e.id = "treeContainer"
-            e.classList.add("window")
-
-                let panButton = document.createElement("div")
-                panButton.id = "panButton"
-                e.appendChild(panButton)
-
-                let imgContainer = document.createElement("div")
+                e.appendChild(treePropertiesContainer)
 
             document.body.appendChild(e)
 
@@ -178,11 +150,47 @@ class View {
         },
 
         render(d) {
+            const actions = d.view.actions.add
+            .concat(d.view.actions.edit)
+            .concat(d.view.actions.move)
+            for (let a of actions) {
+                const t = document.getElementById(a.id)
+                t.textContent = a.textContent
+                if (a.isEnabled) {
+                    t.classList.remove("disabled")
+                    t.removeAttribute("disabled")
+                }
+                else {
+                    t.classList.add("disabled")
+                    t.setAttribute("disabled", "true")
+                }
+            }
+        }
+    }
+
+    static TreeView = {
+        init(d) {
+            const e = document.createElement("div")
+            e.id = "treeContainer"
+            e.classList.add("window")
+
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+                svg.id = "svg"
+                // hide the image from screenreaders as the rest of our document contains the same information and is more accessible
+                svg.setAttribute("aria-hidden", "true")
+                e.appendChild(svg)
+
+            document.body.appendChild(e)
+        },
+
+        render(d) {
 
             // set constants
-            const diameter = 20
+            const diameter = 10
             // minimum margin
-            const margin = 50
+            const horizontalMargin = 25
+            const verticalMargin = 25
+
             
             const h = d.tree.head
 
@@ -191,7 +199,7 @@ class View {
                 const depth = d.tree.getDepth(node)
                 const i = d.tree.getNodeIndexIncludeBlanks(node)
 
-                const width = 500
+                const width = document.getElementById("treeContainer").getBoundingClientRect().x
                 // miimum spread
                 let s = {}
                 const maximumChildren = 2
@@ -213,7 +221,7 @@ class View {
                     const maxDepth = d.tree.getTreeDepth()
                     const depth = d.tree.getDepth(node)
                     const depthMult = maxDepth - depth + 1
-                    const spread = margin * (maximumChildren-1) * Math.pow(maximumChildren, depthMult)
+                    const spread = horizontalMargin * (maximumChildren-1) * Math.pow(maximumChildren, depthMult)
                     const step = spread/(maximumChildren-1)
                     // console.log("depthMult: ", depthMult)
                     // console.log("depth: ", depth)
@@ -226,7 +234,7 @@ class View {
                         p.x + i*step - spread/2
                     )
                     s.y = Math.round(
-                        depth*(diameter+margin)+diameter/2
+                        depth * (diameter+verticalMargin) + diameter/2
                     )
                     // let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
                     // rect.setAttribute("x", p.x + 0*step - spread/2)
@@ -241,51 +249,73 @@ class View {
             }
 
             function drawCircle(node, svg) {
+                const strokeWidth = 0.25
                 // compute pixel coordinates
-                let coord = getNodeCoordinates(node)
+                const coord = getNodeCoordinates(node)
                 // draw circle
-                let c = document.createElementNS("http://www.w3.org/2000/svg", "circle")
-                c.setAttribute("class", "node")
-                c.id = node.name
+                const c = document.createElementNS("http://www.w3.org/2000/svg", "circle")
                 c.setAttribute("cx", coord.x )
                 c.setAttribute("cy", coord.y )
                 c.setAttribute("r", diameter)
-                c.setAttribute("stroke", "darkblue")
+                c.setAttribute("stroke-width", `${strokeWidth}%`)
                 if (node === d.interface.current) {
-                    c.setAttribute("fill", "yellow")
+                    c.setAttribute("fill", "url(#currentNodeGradient")
+                    c.setAttribute("stroke", "#00040a")
                 }
                 else {
-                    c.setAttribute("fill", "lightblue")
+                    c.setAttribute("fill", "url(#nodeGradient)")
+                    c.setAttribute("stroke", "#2f67ba")
                 }
-                svg.appendChild(c)
+                return c
             }
 
             function drawName(node, svg) {
-                const fontSize = 18
-                const centerScalingFactor = 0.75
+                const fontSize = 12
 
                 // compute pixel coordinates
                 let coord = getNodeCoordinates(node)
 
                 // draw name of this node
                 let text = document.createElementNS("http://www.w3.org/2000/svg", "text")
-                text.setAttribute("font-size", `${fontSize}px`)
+                text.setAttribute("font-size", fontSize)
+                text.setAttribute("font-family", "Segoe UI, Helvetica, Sans-Serif")
                 text.setAttribute(
                     "x",
-                    Math.round(coord.x - fontSize*centerScalingFactor/2)
+                    Math.round(coord.x)
                 )
                 text.setAttribute(
                     "y",
-                    Math.round(coord.y + fontSize*centerScalingFactor/2)
+                    Math.round(coord.y + diameter/2)
                 )
+                text.setAttribute("text-anchor", "middle")
+                text.setAttribute("fill", "white")
                 text.textContent = node.name
-                svg.appendChild(text)
+                return text
+            }
 
+            function drawNode(node, svg) {
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g")
+                g.setAttribute("class", "node")
+                g.setAttribute("data-name", node.name)
+                g.appendChild(
+                    drawCircle(node, svg)
+                )
+                g.appendChild(
+                    drawName(node, svg)
+                )
+                if ( node === d.interface.current ) {
+                    g.setAttribute("class", "node currentNode")
+                }
+                else {
+                    g.setAttribute("class", "node")
+                }
+                svg.appendChild(g)
             }
 
             function drawLine(node, svg) {
                 // compute pixel coordinates
                 let coord = getNodeCoordinates(node)
+                const strokeWidth = 0.25
                 
                 // draw lines to each child
                 let children = d.tree.getChildren(node)
@@ -297,12 +327,13 @@ class View {
                     l.setAttribute( "x2", childCoord.x )
                     l.setAttribute( "y2", childCoord.y )
                     l.setAttribute( "stroke", "black" )
+                    l.setAttribute("stroke-width", `${strokeWidth}%`)
                     svg.appendChild(l)
                 }
             }
 
             function setViewbox(svg) {
-                const padding = 1
+                const padding = 20
                 const b = svg.getBBox()
                 
                 const x = Math.floor(
@@ -320,20 +351,52 @@ class View {
 
                 const viewBox = `${x} ${y} ${width} ${height}`
 
-                svg.setAttribute("viewBox", viewBox)                
+                svg.setAttribute("viewBox", viewBox)
             }
 
-            // clear the "This tree is empty." placeholder
-            document.getElementById("treeContainer").textContent = ""
-
             // remove any previously-rendered tree
-            document.getElementById("svg")?.remove()
+            const svg = document.getElementById("svg")
+            let max = 999
+            while (svg.firstChild && max-->0) {
+                svg.removeChild(svg.firstChild)
+            }
 
-            // create a new svg element to hold all the circles, lines, and text
-            let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-            svg.id = "svg"
-            // hide the image from screenreaders as the rest of our document contains the same information and is more accessible
-            svg.setAttribute("aria-hidden", "true")
+            // create gradients
+
+            const nodeGradient = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient")
+            nodeGradient.setAttribute("id", "nodeGradient")
+            nodeGradient.setAttribute("gradientTransform", "rotate(90)")
+                const stop1 = document.createElementNS("http://www.w3.org/2000/svg", "stop")
+                stop1.setAttribute("offset", "0%")
+                stop1.setAttribute("stop-color", "#7ca3e0")
+                nodeGradient.appendChild(stop1)
+
+                const stop2 = document.createElementNS("http://www.w3.org/2000/svg", "stop")
+                stop2.setAttribute("offset", "100%")
+                stop2.setAttribute("stop-color", "#2c64b8")
+                nodeGradient.appendChild(stop2)
+                
+            svg.appendChild(
+                nodeGradient
+            )
+
+            const currentNodeGradient = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient")
+            currentNodeGradient.setAttribute("id", "currentNodeGradient")
+            currentNodeGradient.setAttribute("gradientTransform", "rotate(90)")
+
+                const stop3 = document.createElementNS("http://www.w3.org/2000/svg", "stop")
+                stop3.setAttribute("offset", "0%")
+                stop3.setAttribute("stop-color", "#002867")
+                currentNodeGradient.appendChild(stop3)
+
+                const stop4 = document.createElementNS("http://www.w3.org/2000/svg", "stop")
+                stop4.setAttribute("offset", "100%")
+                stop4.setAttribute("stop-color", "#00040a")
+                currentNodeGradient.appendChild(stop4)
+
+            svg.appendChild(
+                currentNodeGradient
+            )
 
             // set alt text attributes
             let title = document.createElementNS("http://www.w3.org/2000/svg", "title")
@@ -352,10 +415,7 @@ class View {
                 n => drawLine(n, svg)
             )
             nodes.map(
-                n => drawCircle(n, svg)
-            )
-            nodes.map(
-                n => drawName(n, svg)
+                n => drawNode(n, svg)
             )
 
             document.getElementById("treeContainer").appendChild(svg)
@@ -371,43 +431,10 @@ class View {
         let e = document.createElement("div")
     }
 
-    static Summary = {
-        init(d) {
-            let e = document.createElement('div')
-            e.id = "summaryContainer"
-            e.setAttribute("aria-labelledby", "summaryLabel")
-            e.className = "window"
-
-                let summaryLabel = document.createElement("h1")
-                summaryLabel.id = "summaryLabel"
-                summaryLabel.textContent = "Summary"
-                e.appendChild(summaryLabel)
-
-                let summary = document.createElement('table')
-                summary.id = "summary"
-                e.appendChild(summary)
-
-            document.body.appendChild(e)
-            
-            for (let item of d.view.summary) {
-                let tr = View.TableRow(item)
-                summary.appendChild(tr)
-            }
-
-            this.render(d)
-        },
-        render(d) {
-            for (let item of d.view.summary) {
-                document.getElementById(item.id).textContent = item.value
-            }
-        }
-    }
-
     static Status =  {
         init(d) {
             let e = document.createElement("div")
             e.id = "statusContainer"
-            e.className = "window"
             e.setAttribute("aria-live", "polite")
             e.setAttribute("role", "alert")
             e.setAttribute("aria-labelledby", "statusLabel")
@@ -421,7 +448,7 @@ class View {
                 status.id = "status"
                 e.appendChild(status)
 
-            document.body.appendChild(e)
+                document.getElementById("treeContainer").appendChild(e)
             this.render(d)
         },
 
@@ -438,6 +465,36 @@ class View {
         },
     }
 
+    static Summary = {
+        init(d) {
+            let e = document.createElement('div')
+            e.id = "summaryContainer"
+            e.className = "window"
+            e.setAttribute("aria-labelledby", "summaryLabel")
+
+                let summaryLabel = document.createElement("h1")
+                summaryLabel.id = "summaryLabel"
+                summaryLabel.textContent = "Summary"
+                e.appendChild(summaryLabel)
+
+                let summary = document.createElement('table')
+                summary.id = "summary"
+                e.appendChild(summary)
+            
+            for (let item of d.view.summary) {
+                let tr = View.TableRow(item)
+                summary.appendChild(tr)
+            }
+
+            return e
+        },
+        render(d) {
+            for (let item of d.view.summary) {
+                document.getElementById(item.id).textContent = item.value
+            }
+        }
+    }
+
     static File = {
 
         init(d) {
@@ -449,48 +506,80 @@ class View {
                 h1.textContent = 'File'
                 e.appendChild(h1)
 
-                let save = document.createElement("button")
-                save.id = "save"
-                save.textContent = "Save Tree to File"
-                e.appendChild(save)
+                const saveAndLoadLabel = document.createElement('h2')
+                saveAndLoadLabel.textContent = "Save and Load"
+                saveAndLoadLabel.id = "saveAndLoadLabel"
+                saveAndLoadLabel.className = "menubarLabel"
+                e.appendChild(saveAndLoadLabel)
 
-                let loadDummy = document.createElement("button")
-                loadDummy.id = "loadDummy"
-                loadDummy.textContent = "Load Tree from File..."
-                e.appendChild(loadDummy)
-                
-                let load = document.createElement("input")
-                load.type = "file"
-                load.id = "load"
-                load.style.display = "none"
-                e.appendChild(load)
+                const saveLoadMenu = document.createElement('ol')
+                saveLoadMenu.setAttribute("aria-labeledby", "saveAndLoadLabel")
 
-                let h2export = document.createElement('h2')
-                h2export.textContent = "Export Image"
+                    const save = View.ButtonItem(
+                        {
+                            id: "save",
+                            textContent: "Save Tree to File",
+                        }
+                    )
+                    saveLoadMenu.appendChild(save)
+
+                    const loadDummy = View.ButtonItem(
+                        {
+                            id: "loadDummy",
+                            textContent: "Load Tree from File...",
+                        }
+                    )
+                    saveLoadMenu.appendChild(loadDummy)
+
+                    const load = document.createElement("input")
+                    load.type = "file"
+                    load.id = "load"
+                    load.style.display = "none"
+                    saveLoadMenu.appendChild(load)
+
+                e.appendChild(saveLoadMenu)
+
+                const h2export = document.createElement('h2')
+                h2export.textContent = "Export"
+                h2export.className = "menubarLabel"
                 e.appendChild(h2export)
 
-                let exportSvg = document.createElement("button")
-                exportSvg.id = "exportSvg"
-                exportSvg.textContent = "Export Tree as SVG"
+                const exportSvg = View.ButtonItem(
+                    {
+                        id: "exportSvg",
+                        textContent: "Export Tree as SVG",
+                    }
+                )
                 e.appendChild(exportSvg)
 
-                let exportPng = document.createElement("button")
-                exportPng.id = "exportPng"
-                exportPng.textContent = "Export Tree as PNG"
+                const exportPng = View.ButtonItem(
+                    {
+                        id: "exportPng",
+                        textContent: "Export Tree as PNG",
+                    }
+                )
                 e.appendChild(exportPng)
 
-                let h2 = document.createElement("h2")
+                const exportHtml = View.ButtonItem(
+                    {
+                        id: "exportHtml",
+                        textContent: "Export Tree as HTML",
+                    }
+                )
+                e.appendChild(exportHtml)
+
+                const h2 = document.createElement("h2")
                 h2.textContent = "Exported Image Alt Text"
+                h2.className = "menubarLabel"
                 e.appendChild(h2)
 
-                let alt = document.createElement("textarea")
+                const alt = document.createElement("textarea")
                 alt.id = "altText"
                 alt.rows = 6
                 alt.addEventListener('click', function(e) { this.select() } )
                 e.appendChild(alt)
 
-            document.body.appendChild(e)
-            this.render(d)
+            return e
         },
 
         render(d) {
@@ -499,4 +588,19 @@ class View {
 
     }
 
+    static RightPanel = {
+        init(d) {
+            const e = document.createElement("div")
+            e.id = "rightPanel"
+            
+            e.appendChild( View.Summary.init(d) )
+            e.appendChild( View.File.init(d) )
+            document.body.appendChild(e)
+        },
+
+        render(d) {
+            View.Summary.render(d)
+            View.File.render(d)
+        }
+    }
 }
