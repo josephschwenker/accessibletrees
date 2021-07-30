@@ -22,7 +22,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 canvas {
-    display: none;
+    /* display: none; */
+    border: solid red 5px;
 }
 
 .window {

@@ -219,26 +219,28 @@ class Controller {
     static exportPng(e) {
         console.log("Exporting...")
         const svg = document.getElementById('svg')
-        const c = document.getElementById('canvas').getContext('2d')
+        const canvas = document.getElementById('canvas')
+        canvas.width = Math.ceil( svg.getBoundingClientRect().width )
+        canvas.height = Math.ceil( svg.getBoundingClientRect().height )
+        const c = canvas.getContext('2d')
+        
         const serializer = new XMLSerializer()
         const data = serializer.serializeToString(svg)
-        const img = document.createElement('img')
         const blob = new Blob( [data], {type: 'image/svg+xml'} )
+        const img = new Image()
         const url = URL.createObjectURL(blob)
         console.log(url)
         img.src = url
 
-        img.onload = function() {
-            console.log("lol")
+        console.log("lol")
 
-            c.drawImage(url, 0, 0)
+        c.drawImage(url, 0, 0)
 
-            const file =  canvas
-                .toDataURL('image/png')
-                .replace('img/png', 'image/octet-stream')
+        const file =  canvas
+            .toDataURL('image/png')
+            .replace('img/png', 'image/octet-stream')
 
-            Controller.download(file)
-        }
+        Controller.download(file)
     }
 
     static exportHtml(e) {
