@@ -223,7 +223,7 @@ class Controller {
         const serializer = new XMLSerializer()
         const data = serializer.serializeToString(svg)
         const img = document.createElement('img')
-        const blob = new Blob( [data], {type: 'image/svg+xml/charset=utf-8'} )
+        const blob = new Blob( [data], {type: 'image/svg+xml'} )
         const url = URL.createObjectURL(blob)
         console.log(url)
         img.src = url
