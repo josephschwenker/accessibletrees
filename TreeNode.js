@@ -1,7 +1,7 @@
 class TreeNode {
-    constructor(name) {
+    constructor(name, arity) {
         this.name = name
-        this.children = []
+        this.children = Array(arity)
         return this
     }
 }

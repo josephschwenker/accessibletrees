@@ -1,6 +1,7 @@
 class View {
 
     static init(d) {
+        this.Canvas.init(d)
         this.Edit.init(d)
         this.TreeView.init(d)
         this.Status.init(d)
@@ -12,25 +13,6 @@ class View {
         this.Status.render(d)
         this.Edit.render(d)
         this.RightPanel.render(d)
-    }
-
-    static getTitle(d) {
-        return `A circle-and-line diagram of a computer science tree data structure`
-    }
-
-    static getDesc(d) {
-        const numberOfNodes = d.view.summary.find( item => item.id === "numberOfNodes").value
-        const arity = d.view.summary.find( item => item.id === "arity").value
-        const numberOfLeafNodes = d.view.summary.find( item => item.id === "numberOfLeafNodes").value
-        const numberOfNonLeafNodes = d.view.summary.find( item => item.id === "numberOfNonLeafNodes").value
-        const treeDepth = d.view.summary.find( item => item.id === "treeDepth").value
-
-        if (numberOfNodes === 0) {
-            return `An empty computer science tree data structure represented as a hierarchical diagram with circles for nodes and lines for edges.`
-        }
-        else {
-            return `A computer science tree data structure represented as a hierarchical diagram with circles for nodes and lines for edges. The tree has arity ${arity} and depth ${treeDepth}. There are ${numberOfNodes} nodes, ${numberOfLeafNodes} of which are leaf nodes and ${numberOfNonLeafNodes} of which are non-leaf nodes.`
-        }
     }
 
     static exportSvg(d) {
@@ -50,12 +32,21 @@ class View {
     }
 
     static ButtonItem(action) {
-        let li = document.createElement('li')
-        let button = document.createElement('button')
-        button.textContent = action.textContent
+        const li = document.createElement('li')
+        const button = document.createElement('button')
         button.href = "#"
         button.className = "menubarItem"
         button.id = action.id
+        
+        const t = document.createElement("span")
+        t.textContent = action.textContent
+        button.appendChild(t)
+        
+        const shortcut = document.createElement("span")
+        shortcut.className = "shortcut"
+        shortcut.textContent = action.shortcutName
+        button.appendChild(shortcut)
+        
         li.appendChild(button)
         return li
     }
@@ -72,19 +63,26 @@ class View {
         return tr
     }
 
+    static populateMenu(menuId, actions, labeledBy) {
+        const menu = document.createElement('ol')
+        menu.setAttribute("aria-labelledby", labeledBy)
+        menu.id = menuId
+        actions.map(
+            action => menu.appendChild( View.ButtonItem(action) )
+        )
+        return menu
+    }
+
+    static Canvas = {
+        init(d) {
+            const canvas = document.createElement('canvas')
+            canvas.id = 'canvas'
+            document.body.appendChild(canvas)
+        }
+    }
+
     static Edit = {
         init(d) {
-
-            function populateMenu(menuId, actions, labeledBy) {
-                const menu = document.createElement('ol')
-                menu.setAttribute("aria-labelledby", labeledBy)
-                menu.id = menuId
-                actions.map(
-                    action => menu.appendChild( View.ButtonItem(action) )
-                )
-                return menu
-            }
-
 
             let e = document.createElement("div")
             e.classList.add("window")
@@ -100,21 +98,21 @@ class View {
                 addLabel.textContent = "Add"
                 addLabel.className = "menubarLabel"
                 e.appendChild(addLabel)
-                e.appendChild( populateMenu("addMenu", d.view.actions.add, "addLabel") )
+                e.appendChild( View.populateMenu("addMenu", d.view.actions.add, "addLabel") )
 
                 const editLabel = document.createElement('h2')
                 editLabel.id = "editLabel"
                 editLabel.textContent = "Edit"
                 editLabel.className = "menubarLabel"
                 e.appendChild(editLabel)
-                e.appendChild( populateMenu("editMenu", d.view.actions.edit, "editLabel") )
+                e.appendChild( View.populateMenu("editMenu", d.view.actions.edit, "editLabel") )
 
                 const moveLabel = document.createElement('h2')
                 moveLabel.id = "moveLabel"
-                moveLabel.textContent = "Move"
+                moveLabel.textContent = "Move To"
                 moveLabel.className = "menubarLabel"
                 e.appendChild(moveLabel)
-                e.appendChild( populateMenu("moveMenu", d.view.actions.move, "moveLabel") )
+                e.appendChild( View.populateMenu("moveMenu", d.view.actions.move, "moveLabel") )
 
                 const treePropertiesLabel = document.createElement('h2')
                 treePropertiesLabel.id = "treePropertiesLabel"
@@ -133,7 +131,7 @@ class View {
                     spinner.id = "arity"
                     spinner.type = "number"
                     spinner.min = 1
-                    spinner.max = 16
+                    spinner.max = 6
                     spinner.step = 1
                     spinner.value = d.tree.arity
                     treePropertiesContainer.appendChild(spinner)
@@ -155,7 +153,6 @@ class View {
             .concat(d.view.actions.move)
             for (let a of actions) {
                 const t = document.getElementById(a.id)
-                t.textContent = a.textContent
                 if (a.isEnabled) {
                     t.classList.remove("disabled")
                     t.removeAttribute("disabled")
@@ -188,7 +185,7 @@ class View {
             // set constants
             const diameter = 10
             // minimum margin
-            const horizontalMargin = 25
+            const horizontalMargin = diameter*2/d.tree.arity + 1
             const verticalMargin = 25
 
             
@@ -202,7 +199,7 @@ class View {
                 const width = document.getElementById("treeContainer").getBoundingClientRect().x
                 // miimum spread
                 let s = {}
-                const maximumChildren = 2
+                const maximumChildren = d.tree.arity
 
                 // base case: this is the head
                 if (depth === 0) {
@@ -222,7 +219,7 @@ class View {
                     const depth = d.tree.getDepth(node)
                     const depthMult = maxDepth - depth + 1
                     const spread = horizontalMargin * (maximumChildren-1) * Math.pow(maximumChildren, depthMult)
-                    const step = spread/(maximumChildren-1)
+                    const step = spread/(maximumChildren-1) || 0
                     // console.log("depthMult: ", depthMult)
                     // console.log("depth: ", depth)
                     // console.log("spread: ", spread)
@@ -237,10 +234,10 @@ class View {
                         depth * (diameter+verticalMargin) + diameter/2
                     )
                     // let rect = document.createElementNS("http://www.w3.org/2000/svg", "rect")
-                    // rect.setAttribute("x", p.x + 0*step - spread/2)
-                    // rect.setAttribute("y", depth*(diameter+margin)+diameter/2)
+                    // rect.setAttribute("x", p.x)
+                    // rect.setAttribute("y", p.y)
                     // rect.setAttribute("width", spread)
-                    // rect.setAttribute("height", (depth+1)*(diameter)+diameter/2)
+                    // rect.setAttribute("height", diameter)
                     // rect.setAttribute("stroke", "orange")
                     // rect.setAttribute("fill", "none")
                     // svg.appendChild(rect)
@@ -400,11 +397,11 @@ class View {
 
             // set alt text attributes
             let title = document.createElementNS("http://www.w3.org/2000/svg", "title")
-            title.textContent = View.getTitle(d)
+            title.textContent = d.view.title
             svg.appendChild(title)
 
             let desc = document.createElementNS("http://www.w3.org/2000/svg", "desc")
-            desc.textContent = View.getDesc(d)
+            desc.textContent = d.view.description
             svg.appendChild(desc)
 
             // render in depth-first search order because why not :) (actually it's because I really don't want to rewrite this whole breadth-first algorithm and I already have a working depth-first one, can you tell how much I love life? PS I hope you're having fun looking at my code LOL s/o from Joseph 2021-07-11)
@@ -512,31 +509,12 @@ class View {
                 saveAndLoadLabel.className = "menubarLabel"
                 e.appendChild(saveAndLoadLabel)
 
-                const saveLoadMenu = document.createElement('ol')
-                saveLoadMenu.setAttribute("aria-labeledby", "saveAndLoadLabel")
-
-                    const save = View.ButtonItem(
-                        {
-                            id: "save",
-                            textContent: "Save Tree to File",
-                        }
-                    )
-                    saveLoadMenu.appendChild(save)
-
-                    const loadDummy = View.ButtonItem(
-                        {
-                            id: "loadDummy",
-                            textContent: "Load Tree from File...",
-                        }
-                    )
-                    saveLoadMenu.appendChild(loadDummy)
-
+                const saveLoadMenu = View.populateMenu("saveLoadMenu", d.view.actions.saveLoad, saveAndLoadLabel)
                     const load = document.createElement("input")
                     load.type = "file"
                     load.id = "load"
                     load.style.display = "none"
                     saveLoadMenu.appendChild(load)
-
                 e.appendChild(saveLoadMenu)
 
                 const h2export = document.createElement('h2')
@@ -544,29 +522,8 @@ class View {
                 h2export.className = "menubarLabel"
                 e.appendChild(h2export)
 
-                const exportSvg = View.ButtonItem(
-                    {
-                        id: "exportSvg",
-                        textContent: "Export Tree as SVG",
-                    }
-                )
-                e.appendChild(exportSvg)
-
-                const exportPng = View.ButtonItem(
-                    {
-                        id: "exportPng",
-                        textContent: "Export Tree as PNG",
-                    }
-                )
-                e.appendChild(exportPng)
-
-                const exportHtml = View.ButtonItem(
-                    {
-                        id: "exportHtml",
-                        textContent: "Export Tree as HTML",
-                    }
-                )
-                e.appendChild(exportHtml)
+                const exportMenu = View.populateMenu("exportMenu", d.view.actions.export, h2export)
+                e.appendChild(exportMenu)
 
                 const h2 = document.createElement("h2")
                 h2.textContent = "Exported Image Alt Text"
@@ -577,13 +534,26 @@ class View {
                 alt.id = "altText"
                 alt.rows = 6
                 alt.addEventListener('click', function(e) { this.select() } )
+                alt.textContent = d.view.title
                 e.appendChild(alt)
+
+                const longAltTextLabel = document.createElement("h2")
+                longAltTextLabel.textContent = "Extended Alt Text"
+                longAltTextLabel.className = "menubarLabel"
+                e.appendChild(longAltTextLabel)
+                const longAlt = document.createElement("textarea")
+                longAlt.id = "longAltText"
+                longAlt.rows = 6
+                longAlt.addEventListener('click', function(e) { this.select() } )
+                longAlt.textContent = d.view.description
+                e.appendChild(longAlt)
 
             return e
         },
 
         render(d) {
-            document.getElementById("altText").textContent = View.getDesc(d)
+            document.getElementById("altText").textContent = d.view.title
+            document.getElementById("longAltText").textContent = d.view.description
         }
 
     }

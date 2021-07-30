@@ -1,6 +1,6 @@
 class Tree {
     constructor() {
-        this.arity = 4
+        this.arity = 6
         this.head = null
         return this
     }
@@ -24,6 +24,20 @@ class Tree {
             }
             return nodes
         }
+    }
+
+    getNodesBfs() {
+        let r = []
+        let max = 999
+        if ( this.head ) {
+            let q = [this.head]
+            while (q.length && max--) {
+                let c = q.shift()
+                r.push(c)
+                q = q.concat( this.getChildren(c) )
+            }
+        }
+        return r
     }
 
     getNodeByName(name) {
@@ -163,11 +177,20 @@ class Tree {
 
     getFirstChild(n) {
         if (n) {
-            for (let c of n.children) {
-                if (c) {
-                    return c
-                }
-            }
+            return n.children.find(
+                c => !!c
+            )
+        }
+        else {
+            throw new Error("Node has no children")
+        }
+    }
+
+    getLastChild(n) {
+        if (n) {
+            return n.children.slice().reverse().find(
+                c => !!c
+            )
         }
         else {
             throw new Error("Node has no children")
@@ -278,13 +301,11 @@ class Tree {
             throw new Error("Cannot add new node in a non-empty position")
         }
         else {
-            let n
+            const n = new TreeNode(name, this.arity)
             if (this.head === null) {
-                n = new TreeNode(name)
                 this.head = n
             }
             else {
-                n = new TreeNode(name)
                 parent.children[position] = n
             }
             return n

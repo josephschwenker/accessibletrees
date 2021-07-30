@@ -1,3 +1,3 @@
 # accessibletrees
 
-https://josephschwenker.github.io/accessibletrees/
+https://krector.git-pages.research.uiowa.edu/accessiblegraphcreation/
