@@ -232,7 +232,7 @@ class Controller {
         console.log(url)
         img.src = url
 
-        console.log("lol")
+        alert("lol")
 
         c.drawImage(url, 0, 0)
 
