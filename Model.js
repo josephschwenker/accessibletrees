@@ -18,14 +18,43 @@ class Model {
         }
     }
 
-    static tree = new Tree()
-
     static interface = {
         current: null,
         nextNameIndex: 0,
+        maximumArity: 6,
+        defaultArity: 2,
+        isPanning: false,
+        panningStartCoordinates: {x: 0, y: 0},
+        coordinates: {x: 0, y: 0},
+        zoomDelta: 0,
     }
 
+    static tree = new Tree(this.interface.defaultArity)
+
     static nodeNames = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")
+
+    static zoom(coordinates, direction) {
+        this.interface.coordinates = coordinates
+        this.interface.zoomDelta = -direction
+    }
+
+    static stopZooming() {
+        this.interface.zoomDelta = 0
+    }
+
+    static startPanning(panningStartCoordinates, viewBoxCoordinates) {
+        this.interface.isPanning = true
+        this.interface.panningStartCoordinates = panningStartCoordinates
+        this.interface.viewBoxCoordinates = viewBoxCoordinates
+    }
+
+    static stopPanning() {
+        this.interface.isPanning = false
+    }
+
+    static setMoveCoordinates(coordinates) {
+        this.interface.coordinates = coordinates
+    }
 
     static getNextName() {
         const quotient = Math.floor( this.interface.nextNameIndex / this.nodeNames.length )
@@ -72,7 +101,7 @@ class Model {
     }
 
     static canAddChild(index) {
-        return Boolean( this.interface.current && !this.interface.current.children[index] )
+        return Boolean( this.interface.current && !this.interface.current.children[index] && index<this.tree.arity)
     }
 
     static getSummary() {
@@ -112,12 +141,13 @@ class Model {
 
     static getActions() {
         class Action {
-            constructor(id, textContent, isEnabled, shortcut) {
+            constructor(id, textContent, isEnabled, shortcut, isVisible=true) {
                 this.id = id
                 this.textContent = textContent
                 this.isEnabled = isEnabled
                 this.shortcut = shortcut
                 this.shortcutName = Action.translateShortcut(shortcut)
+                this.isVisible = isVisible
             }
             static translateShortcut(shortcut) {
                 if (shortcut) {
@@ -140,22 +170,24 @@ class Model {
             new Action("asHead", "Head to Tree", !!!this.tree.head, {shiftKey: true, code: "KeyH"}),
         ]
 
-        if (this.tree.arity===2) {
-            add = add.concat(
-                [
-                    new Action("asLeft", `Left Child`, this.canAddLeftChild(), {shiftKey: true, code: "Digit1"}),
-                    new Action("asRight", `Right Child`, this.canAddRightChild(),{shiftKey: true, code: "Digit2"}),
-                ]
-            )
-        }
-        else if (this.tree.arity === 1 || this.tree.arity > 2) {
-            for (let i=0; i<this.tree.arity; i++) {
+        if (this.tree.arity > 0 && this.tree.arity<=this.interface.maximumArity) {
+            for (let i=0; i<=this.interface.maximumArity; i++) {
+                let label = `As ${Model.numberSuffix(i+1)} Child`
+                if (this.tree.arity === 2) {
+                    if (i===0) {
+                        label = "As Left Child"
+                    }
+                    else if (i===1) {
+                        label = "As Right Child"
+                    }
+                }
                 add.push(
                     new Action(
                         `as${Model.numberSuffix(i)}`,
-                        `As ${Model.numberSuffix(i+1)} Child`,
+                        label,
                         this.canAddChild(i),
-                        {shiftKey: true, code: `Digit${i+1}`}
+                        {shiftKey: true, code: `Digit${i+1}`},
+                        i < this.tree.arity ? true : false,
                     )
                 )
             }
@@ -192,6 +224,19 @@ class Model {
     static changeArity(arity) {
         // before we start, cry
         this.tree.arity = arity
+        // filter all nodes in the tree, pruning any children at indices greater than the arity
+        const nodes = this.tree.getNodesBfs()
+        // move the cursor to a save position before removing any nodes
+        let max = 999
+        while ( this.tree.getNodeIndexIncludeBlanks(this.interface.current) >= arity && max--) {
+            this.interface.current = this.tree.getParent(this.interface.current)
+        }
+        // prune children
+        nodes.map(
+            node => {
+                node.children = node.children.slice(0, arity)
+            }
+        )
     }
 
     static move(d) {
@@ -431,14 +476,15 @@ class Model {
 
         // check if there is a tree in this file
         if ( json.tree.head ) {
-            // load interface settings
-    
+            
             // delete the current tree
             delete this.tree
             // rebuild the tree
-            this.tree = new Tree()
+            this.tree = new Tree(json.tree.arity)
             buildTree(json.tree.head, null, null)       
             
+            // load interface settings
+            this.interface = json.interface
             // set the cursor
             this.interface.current = this.tree.getNodeByName(json.interface.current.name)
         }

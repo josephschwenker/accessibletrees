@@ -31,7 +31,7 @@ class View {
         }
     }
 
-    static ButtonItem(action) {
+    static MenubarItem(action) {
         const li = document.createElement('li')
         const button = document.createElement('button')
         button.href = "#"
@@ -39,6 +39,7 @@ class View {
         button.id = action.id
         
         const t = document.createElement("span")
+        t.className = "menubarItemName"
         t.textContent = action.textContent
         button.appendChild(t)
         
@@ -68,7 +69,7 @@ class View {
         menu.setAttribute("aria-labelledby", labeledBy)
         menu.id = menuId
         actions.map(
-            action => menu.appendChild( View.ButtonItem(action) )
+            action => menu.appendChild( View.MenubarItem(action) )
         )
         return menu
     }
@@ -87,11 +88,38 @@ class View {
             let e = document.createElement("div")
             e.classList.add("window")
             e.id = "edit"
+            
+            const editContainerLabel = document.createElement("h1")
+            editContainerLabel.textContent = "Edit and Move"
+            editContainerLabel.id = "editContainerLabel"
+            e.appendChild(editContainerLabel)
+            
+                const treePropertiesLabel = document.createElement('h2')
+                treePropertiesLabel.id = "treePropertiesLabel"
+                treePropertiesLabel.textContent = "Tree Properties"
+                treePropertiesLabel.className = "menubarLabel"
+                e.appendChild(treePropertiesLabel)
 
-                const editContainerLabel = document.createElement("h1")
-                editContainerLabel.textContent = "Edit and Move"
-                editContainerLabel.id = "editContainerLabel"
-                e.appendChild(editContainerLabel)
+                const treePropertiesContainer = document.createElement("div")
+                treePropertiesContainer.id = "treePropertiesContainer"
+
+                    const span = document.createElement('span')
+                    span.textContent = "Nodes have at most"
+                    treePropertiesContainer.appendChild(span)
+
+                    const spinner = document.createElement('input')
+                    spinner.id = "aritySpinner"
+                    spinner.type = "number"
+                    spinner.min = 1
+                    spinner.max = d.interface.maximumArity
+                    spinner.step = 1
+                    treePropertiesContainer.appendChild(spinner)
+
+                    const span2 = document.createElement('span')
+                    span2.textContent = "children"
+                    treePropertiesContainer.appendChild(span2)
+
+                e.appendChild(treePropertiesContainer)
 
                 const addLabel = document.createElement("h2")
                 addLabel.id = "addLabel"
@@ -114,45 +142,20 @@ class View {
                 e.appendChild(moveLabel)
                 e.appendChild( View.populateMenu("moveMenu", d.view.actions.move, "moveLabel") )
 
-                const treePropertiesLabel = document.createElement('h2')
-                treePropertiesLabel.id = "treePropertiesLabel"
-                treePropertiesLabel.textContent = "Tree Properties"
-                treePropertiesLabel.className = "menubarLabel"
-                e.appendChild(treePropertiesLabel)
-
-                const treePropertiesContainer = document.createElement("div")
-                treePropertiesContainer.id = "treePropertiesContainer"
-
-                    const span = document.createElement('span')
-                    span.textContent = "Nodes have at most"
-                    treePropertiesContainer.appendChild(span)
-
-                    const spinner = document.createElement('input')
-                    spinner.id = "arity"
-                    spinner.type = "number"
-                    spinner.min = 1
-                    spinner.max = 6
-                    spinner.step = 1
-                    spinner.value = d.tree.arity
-                    treePropertiesContainer.appendChild(spinner)
-
-                    const span2 = document.createElement('span')
-                    span2.textContent = "children"
-                    treePropertiesContainer.appendChild(span2)
-
-                e.appendChild(treePropertiesContainer)
-
             document.body.appendChild(e)
 
             this.render(d)
         },
 
         render(d) {
+            // update spinner button value
+            document.getElementById('aritySpinner').value = d.tree.arity
             const actions = d.view.actions.add
             .concat(d.view.actions.edit)
             .concat(d.view.actions.move)
             for (let a of actions) {
                 const t = document.getElementById(a.id)
+                t.getElementsByClassName("menubarItemName")[0].textContent = a.textContent
                 if (a.isEnabled) {
                     t.classList.remove("disabled")
                     t.removeAttribute("disabled")
@@ -160,6 +163,12 @@ class View {
                 else {
                     t.classList.add("disabled")
                     t.setAttribute("disabled", "true")
+                }
+                if (a.isVisible) {
+                    t.classList.remove('hidden')
+                }
+                else {
+                    t.classList.add('hidden')
                 }
             }
         }
@@ -181,6 +190,59 @@ class View {
         },
 
         render(d) {
+
+            if (d.interface.isPanning) {
+
+                // we are panning, so skip rendering the tree
+
+                const svg = document.getElementById('svg')
+                // get the actual element size
+                const s = svg.getBoundingClientRect()
+                // get the viewBox
+                const v = d.interface.viewBoxCoordinates
+                // get the coordinates when the pan started
+                const p = d.interface.panningStartCoordinates
+                // get the current coordinates
+                const c = d.interface.coordinates
+
+                // calculate deltas
+                const [dx, dy] = [
+                    (p.x-c.x),
+                    (p.y-c.y),
+                ]
+
+                // apply deltas to the viewbox
+                svg.setAttribute(
+                    'viewBox',
+                    `${v.x+dx} ${v.x+dy} ${v.w} ${v.h}`
+                )
+                return
+            }
+
+            // code adapted from https://stackoverflow.com/questions/52576376/how-to-zoom-in-on-a-complex-svg-structure
+            if (d.interface.zoomDelta) {
+                const svg = document.getElementById('svg')
+                const s = svg.getBoundingClientRect()
+
+                // get the mouse coordinates
+                const c = d.interface.coordinates
+                const zoomFactor = 0.1
+                // get the viewBox
+                const [vx, vy, vw, vh] = svg.getAttribute('viewBox').split(' ').map(
+                    coord => Number(coord)
+                )
+                // calculate deltas
+                const dw = vw * d.interface.zoomDelta * zoomFactor
+                const dh = vh * d.interface.zoomDelta * zoomFactor
+                const dx = dw*c.x/s.width
+                const dy = dh*c.y/s.height
+
+                svg.setAttribute(
+                    'viewBox',
+                    `${vx+dx} ${vx+dy} ${vw-dw} ${vh-dh}`
+                )
+                return
+            }
 
             // set constants
             const diameter = 10
@@ -397,7 +459,7 @@ class View {
 
             // set alt text attributes
             let title = document.createElementNS("http://www.w3.org/2000/svg", "title")
-            title.textContent = d.view.title
+            title.textContent = `${d.view.title} ${d.view.description}`
             svg.appendChild(title)
 
             let desc = document.createElementNS("http://www.w3.org/2000/svg", "desc")
@@ -534,26 +596,24 @@ class View {
                 alt.id = "altText"
                 alt.rows = 6
                 alt.addEventListener('click', function(e) { this.select() } )
-                alt.textContent = d.view.title
                 e.appendChild(alt)
 
-                const longAltTextLabel = document.createElement("h2")
-                longAltTextLabel.textContent = "Extended Alt Text"
-                longAltTextLabel.className = "menubarLabel"
-                e.appendChild(longAltTextLabel)
-                const longAlt = document.createElement("textarea")
-                longAlt.id = "longAltText"
-                longAlt.rows = 6
-                longAlt.addEventListener('click', function(e) { this.select() } )
-                longAlt.textContent = d.view.description
-                e.appendChild(longAlt)
+                // const longAltTextLabel = document.createElement("h2")
+                // longAltTextLabel.textContent = "Extended Alt Text"
+                // longAltTextLabel.className = "menubarLabel"
+                // e.appendChild(longAltTextLabel)
+                // const longAlt = document.createElement("textarea")
+                // longAlt.id = "longAltText"
+                // longAlt.rows = 6
+                // longAlt.addEventListener('click', function(e) { this.select() } )
+                // longAlt.textContent = d.view.description
+                // e.appendChild(longAlt)
 
             return e
         },
 
         render(d) {
-            document.getElementById("altText").textContent = d.view.title
-            document.getElementById("longAltText").textContent = d.view.description
+            document.getElementById("altText").textContent = `${d.view.title} ${d.view.description}`
         }
 
     }
@@ -566,6 +626,8 @@ class View {
             e.appendChild( View.Summary.init(d) )
             e.appendChild( View.File.init(d) )
             document.body.appendChild(e)
+            View.Summary.render(d)
+            View.File.render(d)
         },
 
         render(d) {

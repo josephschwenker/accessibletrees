@@ -8,8 +8,8 @@ class Controller {
     }
 
     static bindEvents(e) {
-        document.getElementById("asHead").addEventListener("click", Controller.addNodeHead)
         Controller.bindArityEvents(e)
+        document.getElementById("asHead").addEventListener("click", Controller.addNodeHead)
         document.getElementById("removeNode").addEventListener("click", Controller.removeNode)
         document.getElementById("renameNode").addEventListener("click", Controller.renameNode)
         document.getElementById("moveUp").addEventListener("click", Controller.moveUp)
@@ -17,15 +17,71 @@ class Controller {
         document.getElementById("moveLastChild").addEventListener("click", Controller.moveLastChild)
         document.getElementById("moveLeft").addEventListener("click", Controller.moveLeft)
         document.getElementById("moveRight").addEventListener("click", Controller.moveRight)
-        document.getElementById('arity').addEventListener('change', Controller.changeArity)
+        document.getElementById('aritySpinner').addEventListener('change', Controller.changeArity)
         document.getElementById("save").addEventListener('click', Controller.save)
         document.getElementById('svg').addEventListener('click', Controller.selectNode)
+        // document.getElementById('svg').addEventListener('mousedown', Controller.startPanning)
+        // document.getElementById('svg').addEventListener('mouseup', Controller.stopPanning)
+        // document.getElementById('svg').addEventListener('mousemove', Controller.svgMouseMove)
+        // document.getElementById('svg').addEventListener('mousewheel', Controller.svgZoom)
         document.getElementById("loadDummy").addEventListener('click', Controller.load)
         document.getElementById("load").addEventListener('change', Controller.upload)
         document.getElementById("exportSvg").addEventListener('click', Controller.exportSvg)
         document.getElementById("exportPng").addEventListener('click', Controller.exportPng)
         document.getElementById("exportHtml").addEventListener('click', Controller.exportHtml)
         document.body.addEventListener('keydown', Controller.keydown)
+    }
+
+    static svgZoom(e) {
+        Model.zoom(
+            {
+                x: e.offsetX,
+                y: e.offsetY
+            },
+            Math.sign(e.deltaY)
+        )
+        console.log(Model.interface.zoomDelta)
+        View.render( Model.getData() )
+        Model.stopZooming()
+        e.preventDefault()
+    }
+
+    static startPanning(e) {
+        const [vx, vy, vw, vh] = svg.getAttribute('viewBox').split(' ').map(
+            coord => Number(coord)
+            )
+            Model.startPanning(
+                {
+                    x: e.clientX,
+                    y: e.clientY,
+                },
+                {
+                    x: vx,
+                    y: vy,
+                    w: vw,
+                    h: vh,
+                }
+                )
+        e.preventDefault()
+    }
+
+    static stopPanning(e) {
+        Model.stopPanning()
+        e.preventDefault()
+    }
+
+    static svgMouseMove(e) {
+        const d = Model.getData()
+        if (d.interface.isPanning) {
+            Model.setMoveCoordinates(
+                {
+                    x: e.clientX,
+                    y: e.clientY,
+                }
+            )
+            View.TreeView.render(d)
+        }
+        e.preventDefault()
     }
 
     static keydown(e) {
@@ -55,17 +111,11 @@ class Controller {
 
     static bindArityEvents(e) {
         const d = Model.getData()
-        if ( d.tree.arity === 2 ) {
-            document.getElementById("asLeft").addEventListener("click", Controller.addNodeLeftChild)
-            document.getElementById("asRight").addEventListener("click", Controller.addNodeRightChild)
-        }
-        else {
-            for (let i=0; i<d.tree.arity; i++) {
-                document.getElementById(`as${Model.numberSuffix(i)}`).addEventListener(
-                    "click",
-                    Controller.addNodeNthChild(i)
-                )
-            }
+        for (let i=0; i<d.interface.maximumArity; i++) {
+            document.getElementById(`as${Model.numberSuffix(i)}`).addEventListener(
+                "click",
+                Controller.addNodeNthChild(i)
+            )
         }
     }
 
@@ -217,30 +267,32 @@ class Controller {
 
     // this function adapted from https://stackoverflow.com/questions/28226677/save-inline-svg-as-jpeg-png-svg
     static exportPng(e) {
-        console.log("Exporting...")
         const svg = document.getElementById('svg')
         const canvas = document.getElementById('canvas')
-        canvas.width = Math.ceil( svg.getBoundingClientRect().width )
-        canvas.height = Math.ceil( svg.getBoundingClientRect().height )
+        const b = svg.getBoundingClientRect()
+        const minimumSize = 1920
+        const scaleFactor = minimumSize / Math.min(b.width, b.height)
+        canvas.width = Math.ceil( b.width * scaleFactor )
+        canvas.height = Math.ceil( b.height * scaleFactor )
         const c = canvas.getContext('2d')
         
         const serializer = new XMLSerializer()
         const data = serializer.serializeToString(svg)
-        const blob = new Blob( [data], {type: 'image/svg+xml'} )
+        // const blob = new Blob( [data], {type: 'image/svg+xml'} )
+        // const url = URL.createObjectURL(blob)
+        const url = 'data:image/svg+xml;base64,' + btoa(data)
         const img = new Image()
-        const url = URL.createObjectURL(blob)
-        console.log(url)
         img.src = url
+        img.onload = function() {
+            c.drawImage(img, 0, 0)
+    
+            const file =  canvas
+                .toDataURL('image/png')
+                .replace('img/png', 'image/octet-stream')
+    
+            Controller.download(file, `Tree (${new Date()}).png`)
+        }
 
-        alert("lol")
-
-        c.drawImage(url, 0, 0)
-
-        const file =  canvas
-            .toDataURL('image/png')
-            .replace('img/png', 'image/octet-stream')
-
-        Controller.download(file)
     }
 
     static exportHtml(e) {
